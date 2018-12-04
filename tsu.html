@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Tsunami</title>
+  <link rel="stylesheet"
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+        crossorigin="anonymous">
+  <link rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+        integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+        crossorigin=""/>
+  <link rel="stylesheet" href="tsu.css"/>
+</head>
+<body>
+  <div class="container">
+    <div class="row" style="margin-top: 20px; margin-bottom: 20px">
+      <div class="col-md-1 offset-md-5" style="text-align: center">
+        <button class="btn btn-default" name="play"
+                onclick="play();">Play</button>
+      </div>
+      <div class="col-md-1" style="text-align: center">
+        <button class="btn btn-default" name="stop"
+                onclick="stop();">Stop</button>
+      </div>
+    </div>
+  </div>
+  <div id="map"></div>
+  <pre id="log"></pre>
+  <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
+          integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+          crossorigin=""></script>
+  <script src="osm-read-pbf.js"></script>
+  <script src="tsu.js"></script>
+</body>
+</html>
