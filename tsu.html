@@ -17,13 +17,17 @@
 <body>
   <div class="container">
     <div class="row" style="margin-top: 20px; margin-bottom: 20px">
-      <div class="col-md-1 offset-md-5" style="text-align: center">
-        <button class="btn btn-default" name="play"
+      <div class="col-md-1 offset-md-4" style="text-align: center">
+        <button class="btn btn-default" id="play"
                 onclick="play();">Play</button>
       </div>
       <div class="col-md-1" style="text-align: center">
-        <button class="btn btn-default" name="stop"
+        <button class="btn btn-default" id="stop"
                 onclick="stop();">Stop</button>
+      </div>
+      <div class="col-md-1" style="text-align: center">
+        <button class="btn btn-danger" id="alert"
+                onclick="tsunami();">Alert</button>
       </div>
     </div>
   </div>

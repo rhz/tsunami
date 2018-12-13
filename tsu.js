@@ -1,13 +1,21 @@
 // note: 0.0001 degrees in latitude at -33.0421 is about 11 meters
 // according to http://www.csgnetwork.com/degreelenllavcalc.html
 var active = false,
+    alertMode = false,
+    delay = 1000, // how often to iterate
+    // people and their properties
     people = [],
-    delay = 1000,
-    dlatmax = 0.0001, // max delta latitude
-    dlngmax = 0.0001, // max delta longitude
+    personRadius = 1,
+    // map coordinates and zoom level
     centre = [-33.0421, -71.6123],
     zoomLevel = 16,
-    personRadius = 1
+    // map objects (nodes, ways, relations)
+    nodeCount = 0,
+    wayCount = 0,
+    relCount = 0,
+    polygonCount = 0,
+    nodes = {},
+    buildings = []
 
 // load map and tiles
 var valpo = L.map('map').setView(centre, zoomLevel)
@@ -16,86 +24,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(valpo)
 
-// move a person on the map
-function movePerson(p) {
-  var ppos = p.getLatLng(),
-      dlat = Math.random()*2*dlatmax-dlatmax, // delta lat
-      dlng = Math.random()*2*dlngmax-dlngmax, // delta lng
-      npos = [ppos.lat+dlat, ppos.lng+dlng], // new position
-      overlap = false
-  for (var q of people) {
-    if (q !== p) {
-      var qpos = q.getLatLng(),
-          dist = valpo.distance(npos, qpos)
-      if (dist < 2*personRadius) {
-        overlap = true
-        break
-      }
-    }
-  }
-  if (!overlap)
-    p.setLatLng(npos)
-}
-function movePersonAfterDelay(p) {
-  var id = window.setTimeout(movePersonRepeat(p), delay)
-  p.timeout = id
-}
-function movePersonRepeat(p) {
-  return () => {
-    movePerson(p)
-    if (active) movePersonAfterDelay(p)
-  }
-}
-
-// add a person (drawn as a circle)
-function addPerson(latlng) {
-  var p = L.circle(latlng, {
-    color: 'red',
-    fillColor: '#f03',
-    fillOpacity: 0.5,
-    radius: personRadius
-  }).addTo(valpo)
-  // people moves on the map
-  active = true // play()
-  movePersonAfterDelay(p)
-  people.push(p)
-  return p
-}
-var p1 = addPerson([-33.045, -71.6123])
-
-// spawn new people on the map by clicking on it
-function onMapClick(e) {
-  addPerson(e.latlng)
-}
-valpo.on('click', onMapClick)
-
-// stop people
-function stop() {
-  active = false;
-  for (p of people)
-    window.clearTimeout(p.timeout);
-}
-
-// play
-function play() {
-  active = true;
-  for (p of people)
-    movePersonAfterDelay(p)
-}
-
 // logging element
 var logEle = document.getElementById("log");
 function log(msg) {
   logEle.textContent += msg + '\n';
 }
-
-var nodeCount = 0,
-    wayCount = 0,
-    relCount = 0,
-    polygonCount = 0,
-    start = Date.now(),
-    nodes = {},
-    buildings = []
 
 // helper function
 function last(xs) {
@@ -122,6 +55,7 @@ function afterParse() {
 }
 
 // parse pbf file
+var start = Date.now()
 pbfParser.parse({
   filePath: 'valpo.osm.pbf',
   endDocument: function() {
@@ -144,12 +78,15 @@ pbfParser.parse({
     if (isPolygon(way))
       polygonCount += 1
     if ('building' in way.tags) {
-      buildings.push({vertices: way.nodeRefs})
-      // NOTE: there's one way which is a building and not a polygon
-      // maybe a building that was cut in half
-      // when generating the pbf file?
-      if (!isPolygon(way))
+      if (isPolygon(way)) {
+        var xs = way.nodeRefs
+        xs.pop()
+        buildings.push({vertices: xs})
+      } else {
+        // NOTE: there's one way which is a building but not a polygon
+        // maybe it was cut in half when generating the pbf file?
         log('building is not a polygon: ' + JSON.stringify(way))
+      }
     }
   },
   relation: function(relation) {
@@ -160,4 +97,103 @@ pbfParser.parse({
     throw msg
   }
 })
+
+
+// move a person on the map
+function moveBy(latlng, angle, len) {
+  var {x: px, y: py} = valpo.project(latlng, zoomLevel),
+      nx = px + len * Math.cos(angle),
+      ny = py + len * Math.sin(angle)
+  return valpo.unproject([nx, ny], zoomLevel)
+}
+
+function chooseAngle() {
+  return alertMode?
+    Math.random()*Math.PI+Math.PI :
+    Math.random()*2*Math.PI;
+}
+
+function chooseVelocity() {
+  return Math.random()
+}
+
+function movePerson(p) {
+  var angle = chooseAngle(),
+      // unfortunately len is measured in pixels instead of meters
+      // 1 pixel is about 2 meters at zoomLevel = 16
+      len = chooseVelocity(),
+      ppos = p.getLatLng(), // current position
+      npos = moveBy(ppos, angle, len) // new position
+  // check for collisions with other people
+  for (var q of people) {
+    if (q !== p) {
+      var qpos = q.getLatLng()
+      while (qpos.distanceTo(npos) < 2*personRadius) {
+        len /= 2
+        npos = moveBy(ppos, angle, len)
+      }
+    }
+  }
+  // TODO: check for collisions with buildings
+  p.setLatLng(npos)
+}
+
+function startPersonAfterDelay(p) {
+  p.timeout = window.setTimeout(startPerson(p), delay)
+}
+
+function startPerson(p) {
+  return () => {
+    movePerson(p)
+    if (active)
+      startPersonAfterDelay(p)
+  }
+}
+
+function move() { // one step
+  for (var p of people)
+    movePerson(p)
+}
+
+// add a person (drawn as a circle)
+function addPerson(latlng) {
+  var p = L.circle(latlng, {
+    color: 'red',
+    fillColor: '#f03',
+    fillOpacity: 0.5,
+    radius: personRadius
+  }).addTo(valpo)
+  // people moves on the map
+  active = true // play()
+  startPersonAfterDelay(p)
+  people.push(p)
+  return p
+}
+var p1 = addPerson([-33.045, -71.6123])
+
+// spawn new people on the map by clicking on it
+valpo.on('click', (e) => addPerson(e.latlng))
+
+// stop people
+function stop() {
+  active = false;
+  for (p of people)
+    window.clearTimeout(p.timeout);
+}
+
+// play
+function play() {
+  active = true;
+  for (p of people)
+    startPersonAfterDelay(p)
+}
+
+// tsunami alert
+function tsunami() {
+  alertMode = !alertMode
+  if (alertMode)
+    document.getElementById("alert").className += " tsunami-alert"
+  else
+    document.getElementById("alert").className = "btn btn-danger"
+}
 
