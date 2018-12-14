@@ -24,8 +24,12 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(valpo)
 
+function S(id) {
+  return document.getElementById(id);
+}
+
 // logging element
-var logEle = document.getElementById("log");
+var logEle = S("log");
 function log(msg) {
   logEle.textContent += msg + '\n';
 }
@@ -156,44 +160,114 @@ function move() { // one step
 }
 
 // add a person (drawn as a circle)
-function addPerson(latlng) {
-  var p = L.circle(latlng, {
+function addPerson(latlon) {
+  var p = L.circle(latlon, {
     color: 'red',
     fillColor: '#f03',
     fillOpacity: 0.5,
     radius: personRadius
   }).addTo(valpo)
   // people moves on the map
-  active = true // play()
-  startPersonAfterDelay(p)
+  // active = true
+  // startPersonAfterDelay(p)
   people.push(p)
   return p
 }
-var p1 = addPerson([-33.045, -71.6123])
+// var p1 = addPerson([-33.045, -71.6123])
 
 // spawn new people on the map by clicking on it
 valpo.on('click', (e) => addPerson(e.latlng))
 
-// stop people
-function stop() {
-  active = false;
-  for (p of people)
+// clear map
+function clearMap() {
+  for (var p of people) {
     window.clearTimeout(p.timeout);
+    p.remove()
+  }
+  people = []
 }
 
-// play
-function play() {
-  active = true;
-  for (p of people)
-    startPersonAfterDelay(p)
+function choose(xs) {
+  return xs[Math.floor(Math.random()*xs.length)]
+}
+
+function coords(building) {
+  var xs = [], ys = []
+  for (var nodeId of building.vertices) {
+    xs.push(nodes[nodeId].lat)
+    ys.push(nodes[nodeId].lon)
+  }
+  return [xs, ys]
+}
+
+function mean(xs) {
+  return xs.reduce((a,b) => a+b, 0)/xs.length
+}
+
+// not used
+function centreOfMass(building) {
+  return coords(building).map((xs) => mean(xs))
+}
+
+// circumscribed square
+function csq(building) {
+  var [xs, ys] = coords(building)
+  return [[Math.min(...xs), Math.min(...ys)],
+          [Math.max(...xs), Math.max(...ys)]]
+}
+
+// TODO: add people by pressing on button "add people"
+// * people gets added next to buildings
+// * perhaps the number of people is proportional to
+//   the area of the building
+// * how do we make sure people doesn't get added inside a building?
+//   (eg inside the building next to the one they've been added to)
+function addManyPeople() {
+  var n = S("num-people").value,
+      cs = []
+  for (var i = 0; i < n; i++) {
+    var b = choose(buildings),
+        [[x1, y1], [x2, y2]] = csq(b),
+        xdiff = x2-x1,
+        ydiff = y2-y1,
+        x3 = Math.random()*xdiff+x1,
+        y3 = Math.random()*ydiff+y1
+    addPerson([x3, y3])
+  }
+}
+
+// play and stop
+function playAndStop(btn) {
+  if (active) {
+    // stop moving people
+    for (p of people)
+      window.clearTimeout(p.timeout);
+  } else {
+    // start moving people
+    for (p of people)
+      startPersonAfterDelay(p)
+  }
+  active = !active
+  if (active) {
+    btn.innerHTML = "<i class=\"fas fa-pause\"></i>"
+    btn.className = "btn btn-warning"
+    btn.title = "Pause"
+  } else {
+    btn.innerHTML = "<i class=\"fas fa-play\"></i>"
+    btn.className = "btn btn-success"
+    btn.title = "Play"
+  }
 }
 
 // tsunami alert
-function tsunami() {
+function tsunami(btn) {
   alertMode = !alertMode
-  if (alertMode)
-    document.getElementById("alert").className += " tsunami-alert"
-  else
-    document.getElementById("alert").className = "btn btn-danger"
+  if (alertMode) {
+    btn.className += " tsunami-alert"
+    btn.title = "Turn off tsunami alert"
+  } else {
+    btn.className = "btn btn-danger"
+    btn.title = "Activate tsunami alert"
+  }
 }
 
