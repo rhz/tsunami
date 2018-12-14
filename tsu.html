@@ -13,21 +13,46 @@
         integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
         crossorigin=""/>
   <link rel="stylesheet" href="tsu.css"/>
+  <link rel="stylesheet"
+        href="https://use.fontawesome.com/releases/v5.6.1/css/solid.css"
+        integrity="sha384-aj0h5DVQ8jfwc8DA7JiM+Dysv7z+qYrFYZR+Qd/TwnmpDI6UaB3GJRRTdY8jYGS4"
+        crossorigin="anonymous">
+  <link rel="stylesheet"
+        href="https://use.fontawesome.com/releases/v5.6.1/css/fontawesome.css"
+        integrity="sha384-WK8BzK0mpgOdhCxq86nInFqSWLzR5UAsNg0MGX9aDaIIrFWQ38dGdhwnNCAoXFxL"
+        crossorigin="anonymous">
 </head>
 <body>
   <div class="container">
     <div class="row" style="margin-top: 20px; margin-bottom: 20px">
-      <div class="col-md-1 offset-md-4" style="text-align: center">
-        <button class="btn btn-default" id="play"
-                onclick="play();">Play</button>
-      </div>
-      <div class="col-md-1" style="text-align: center">
-        <button class="btn btn-default" id="stop"
-                onclick="stop();">Stop</button>
+      <div class="col-md-1 offset-md-3" style="text-align: center">
+        <button class="btn btn-success" id="play-and-stop"
+                title="Play"
+                onclick="playAndStop(this)">
+          <i class="fas fa-play"></i>
+        </button>
       </div>
       <div class="col-md-1" style="text-align: center">
         <button class="btn btn-danger" id="alert"
-                onclick="tsunami();">Alert</button>
+                title="Activate tsunami alert"
+                onclick="tsunami(this)">Alert</button>
+      </div>
+      <div class="col-md-3 offset-md-1" style="text-align: center">
+        <button class="btn btn-default" id="add-people"
+                title="Add people to map"
+                onclick="addManyPeople()">
+          <i class="fas fa-plus"></i>
+        </button>
+        <input type="number" id="num-people" value="10"
+               style="width: 4em">
+        <label for="num-people">people</label>
+      </div>
+      <div class="col-md-1" style="text-align: center">
+        <button class="btn btn-primary" id="clear-map"
+                title="Clear map"
+                onclick="clearMap()">
+          <i class="fas fa-broom"></i>
+        </button>
       </div>
     </div>
   </div>
