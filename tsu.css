@@ -2,33 +2,39 @@
   height: 700px;
 }
 
-.tsunami-alert {
-  /* animation-duration: 1.5s; */
-  /* animation-name: colour-change-and-glow; */
-  /* animation-iteration-count: infinite; */
-  animation: 1.5s infinite colour-change-and-glow;
+.btn:focus, .btn:active {
+  outline: none !important;
+  box-shadow: none;
 }
 
-@keyframes colour-change-and-glow {
-  0% {
+.tsunami-alert {
+  /* animation-name: light-on, colour-change-and-glow; */
+  /* animation-duration: 1s, 0.75s; */
+  /* animation-timing-function: ease-in; */
+  /* animation-iteration-count: 1, infinite; */
+  /* animation-direction: alternate; */
+  /* animation-delay: 0s, 1s; */
+  animation: 1s ease-in 0s 1 light-on,
+             0.75s ease-in 1s infinite alternate change-colour-and-glow;
+}
+
+@keyframes light-on {
+  from {
+    box-shadow: none;
+  }
+  to {
+    box-shadow: 0 0 10px 5px rgba(220,53,69,.5);
+  }
+}
+
+@keyframes change-colour-and-glow {
+  from {
     background-color: rgba(220,53,69,1); /* #dc3545; */
     box-shadow: 0 0 10px 5px rgba(220,53,69,.5);
   }
-  20% {
-    background-color: rgba(220,53,69,1);
-    box-shadow: 0 0 10px 5px rgba(220,53,69,.5);
-  }
-  50% {
+  to {
     background-color: rgba(220,53,69,.7); /* #ea858f; */
     box-shadow: 0 0 10px 5px rgba(220,53,69,.2);
-  }
-  80% {
-    background-color: rgba(220,53,69,1);
-    box-shadow: 0 0 10px 5px rgba(220,53,69,.5);
-  }
-  100% {
-    background-color: rgba(220,53,69,1);
-    box-shadow: 0 0 10px 5px rgba(220,53,69,.5);
   }
 }
 
