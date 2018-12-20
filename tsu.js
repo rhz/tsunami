@@ -2,7 +2,8 @@
 // according to http://www.csgnetwork.com/degreelenllavcalc.html
 var active = false,
     alertMode = false,
-    delay = 1000, // how often to iterate
+    timeoutId = 0, // id given by setTimeout is used in clearTimeout
+    delay = 100, // time between one step and the next in milliseconds
     // people and their properties
     people = [],
     personRadius = 1,
@@ -25,13 +26,13 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(valpo)
 
 function S(id) {
-  return document.getElementById(id);
+  return document.getElementById(id)
 }
 
 // logging element
-var logEle = S("log");
+var logEle = S("log")
 function log(msg) {
-  logEle.textContent += msg + '\n';
+  logEle.textContent += msg + '\n'
 }
 
 // helper function
@@ -50,16 +51,18 @@ function drawPolygon(vertices) {
     latlons.push([nodes[nodeId].lat, nodes[nodeId].lon])
   }
   valpo.panTo(latlons[0])
-  return L.polygon(latlons).addTo(valpo);
+  return L.polygon(latlons).addTo(valpo)
 }
 
 function afterParse() {
-  // log('way: ' + JSON.stringify(buildings[0]))
-  // drawPolygon(buildings[0].vertices)
+  // let the user know that people can be added and moved now
+  S("play-and-stop").disabled = false
+  S("add-people").disabled = false
 }
 
 // parse pbf file
 var start = Date.now()
+// TODO: add progress bar
 pbfParser.parse({
   filePath: 'valpo.osm.pbf',
   endDocument: function() {
@@ -114,7 +117,7 @@ function moveBy(latlng, angle, len) {
 function chooseAngle() {
   return alertMode?
     Math.random()*Math.PI+Math.PI :
-    Math.random()*2*Math.PI;
+    Math.random()*2*Math.PI
 }
 
 function chooseVelocity() {
@@ -142,22 +145,65 @@ function movePerson(p) {
   p.setLatLng(npos)
 }
 
-function startPersonAfterDelay(p) {
-  p.timeout = window.setTimeout(startPerson(p), delay)
-}
-
-function startPerson(p) {
-  return () => {
-    movePerson(p)
-    if (active)
-      startPersonAfterDelay(p)
-  }
-}
-
-function move() { // one step
+// move people synchronously one step.
+function moveStep() {
   for (var p of people)
     movePerson(p)
 }
+
+function startPeople() {
+  moveStep()
+  timeoutId = window.setTimeout(startPeople, delay)
+}
+
+function stopPeople() {
+  window.clearTimeout(timeoutId)
+}
+
+function removePeople() {
+  for (var p of people) {
+    p.remove()
+  }
+  people = []
+}
+
+// clear map
+function clearMap() {
+  stopPeople()
+  removePeople()
+}
+
+// play and stop
+function playAndStop(btn) {
+  if (active) {
+    stopPeople()
+  } else {
+    startPeople()
+  }
+  active = !active
+  if (active) {
+    btn.innerHTML = "<i class=\"fas fa-pause\"></i>"
+    btn.className = "btn btn-warning"
+    btn.title = "Pause"
+  } else {
+    btn.innerHTML = "<i class=\"fas fa-play\"></i>"
+    btn.className = "btn btn-success"
+    btn.title = "Play"
+  }
+}
+
+// tsunami alert
+function tsunami(btn) {
+  alertMode = !alertMode
+  if (alertMode) {
+    btn.className += " tsunami-alert"
+    btn.title = "Turn off tsunami alert"
+  } else {
+    btn.className = "btn btn-danger"
+    btn.title = "Activate tsunami alert"
+  }
+}
+
 
 // add a person (drawn as a circle)
 function addPerson(latlon) {
@@ -167,25 +213,12 @@ function addPerson(latlon) {
     fillOpacity: 0.5,
     radius: personRadius
   }).addTo(valpo)
-  // people moves on the map
-  // active = true
-  // startPersonAfterDelay(p)
   people.push(p)
   return p
 }
-// var p1 = addPerson([-33.045, -71.6123])
 
 // spawn new people on the map by clicking on it
 valpo.on('click', (e) => addPerson(e.latlng))
-
-// clear map
-function clearMap() {
-  for (var p of people) {
-    window.clearTimeout(p.timeout);
-    p.remove()
-  }
-  people = []
-}
 
 function choose(xs) {
   return xs[Math.floor(Math.random()*xs.length)]
@@ -233,41 +266,6 @@ function addManyPeople() {
         x3 = Math.random()*xdiff+x1,
         y3 = Math.random()*ydiff+y1
     addPerson([x3, y3])
-  }
-}
-
-// play and stop
-function playAndStop(btn) {
-  if (active) {
-    // stop moving people
-    for (p of people)
-      window.clearTimeout(p.timeout);
-  } else {
-    // start moving people
-    for (p of people)
-      startPersonAfterDelay(p)
-  }
-  active = !active
-  if (active) {
-    btn.innerHTML = "<i class=\"fas fa-pause\"></i>"
-    btn.className = "btn btn-warning"
-    btn.title = "Pause"
-  } else {
-    btn.innerHTML = "<i class=\"fas fa-play\"></i>"
-    btn.className = "btn btn-success"
-    btn.title = "Play"
-  }
-}
-
-// tsunami alert
-function tsunami(btn) {
-  alertMode = !alertMode
-  if (alertMode) {
-    btn.className += " tsunami-alert"
-    btn.title = "Turn off tsunami alert"
-  } else {
-    btn.className = "btn btn-danger"
-    btn.title = "Activate tsunami alert"
   }
 }
 
