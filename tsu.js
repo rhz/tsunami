@@ -25,9 +25,13 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(valpo)
 
-function S(id) {
-  return document.getElementById(id)
-}
+// helper functions
+let S = id => document.getElementById(id)
+let last = xs => xs[xs.length-1]
+let randomIndex = xs => Math.floor(Math.random()*xs.length)
+let choose = xs => xs[randomIndex(xs)]
+let mean = xs => xs.reduce((a,b) => a+b, 0)/xs.length
+let repeat = (n) => (f) => [...Array(n)].map((_, i) => f(i))
 
 // logging element
 var logEle = S("log")
@@ -35,29 +39,46 @@ function log(msg) {
   logEle.textContent += msg + '\n'
 }
 
-// helper function
-function last(xs) {
-  return xs[xs.length-1]
-}
-
 // polygons
-function isPolygon(way) {
-  return way.nodeRefs[0] === last(way.nodeRefs)
-}
+let isPolygon = way => way.nodeRefs[0] === last(way.nodeRefs)
 
 function drawPolygon(vertices) {
-  var latlons = []
-  for (nodeId of vertices) {
+  let latlons = []
+  for (let nodeId of vertices) {
     latlons.push([nodes[nodeId].lat, nodes[nodeId].lon])
   }
   valpo.panTo(latlons[0])
   return L.polygon(latlons).addTo(valpo)
 }
 
+function isInBuilding(latlon, building) {
+}
+
+function computeExitDoor(b) {
+  // TODO: only choose among edges that are not part of
+  // another building
+  var r1 = randomIndex(b.vertices),
+      {lat: lat1, lon: lon1} = nodes[b.vertices[r1]],
+      {lat: lat2, lon: lon2} = nodes[b.vertices[
+        r1 == b.vertices.length-1? 0 : r1+1]],
+      r2 = Math.random()
+  // TODO: check that exit door leads to a street
+  // and put it a delta off the building
+  return [Math.min(lat1, lat2)+r2*Math.abs(lat1-lat2),
+          Math.min(lon1, lon2)+r2*Math.abs(lon1-lon2)]
+}
+
+// TODO: add progress bar
 function afterParse() {
+  // choose "exit point/door" for each building
+  for (let b of buildings) {
+    b.exitDoor = computeExitDoor(b)
+    // TODO: compute exit angle
+  }
   // let the user know that people can be added and moved now
   S("play-and-stop").disabled = false
   S("add-people").disabled = false
+  S("switch-add").disabled = false
 }
 
 // parse pbf file
@@ -86,9 +107,11 @@ pbfParser.parse({
       polygonCount += 1
     if ('building' in way.tags) {
       if (isPolygon(way)) {
-        var xs = way.nodeRefs
+        let xs = way.nodeRefs
         xs.pop()
-        buildings.push({vertices: xs})
+        // NOTE: two buildings have just one vertex, why?
+        if (xs.length > 0)
+          buildings.push({vertices: xs})
       } else {
         // NOTE: there's one way which is a building but not a polygon
         // maybe it was cut in half when generating the pbf file?
@@ -107,10 +130,10 @@ pbfParser.parse({
 
 
 // move a person on the map
-function moveBy(latlng, angle, len) {
-  var {x: px, y: py} = valpo.project(latlng, zoomLevel),
+function moveBy(latlon, angle, len) {
+  let {x: px, y: py} = valpo.project(latlon, zoomLevel),
       nx = px + len * Math.cos(angle),
-      ny = py + len * Math.sin(angle)
+      ny = py - len * Math.sin(angle)
   return valpo.unproject([nx, ny], zoomLevel)
 }
 
@@ -125,16 +148,16 @@ function chooseVelocity() {
 }
 
 function movePerson(p) {
-  var angle = chooseAngle(),
+  let angle = chooseAngle(),
       // unfortunately len is measured in pixels instead of meters
       // 1 pixel is about 2 meters at zoomLevel = 16
       len = chooseVelocity(),
       ppos = p.getLatLng(), // current position
       npos = moveBy(ppos, angle, len) // new position
   // check for collisions with other people
-  for (var q of people) {
+  for (let q of people) {
     if (q !== p) {
-      var qpos = q.getLatLng()
+      let qpos = q.getLatLng()
       while (qpos.distanceTo(npos) < 2*personRadius) {
         len /= 2
         npos = moveBy(ppos, angle, len)
@@ -147,7 +170,7 @@ function movePerson(p) {
 
 // move people synchronously one step.
 function moveStep() {
-  for (var p of people)
+  for (let p of people)
     movePerson(p)
 }
 
@@ -161,7 +184,7 @@ function stopPeople() {
 }
 
 function removePeople() {
-  for (var p of people) {
+  for (let p of people) {
     p.remove()
   }
   people = []
@@ -207,7 +230,7 @@ function tsunami(btn) {
 
 // add a person (drawn as a circle)
 function addPerson(latlon) {
-  var p = L.circle(latlon, {
+  let p = L.circle(latlon, {
     color: 'red',
     fillColor: '#f03',
     fillOpacity: 0.5,
@@ -218,33 +241,35 @@ function addPerson(latlon) {
 }
 
 // spawn new people on the map by clicking on it
-valpo.on('click', (e) => addPerson(e.latlng))
+var addPeopleOnClick = false
+valpo.on('click', (e) => addPeopleOnClick && addPerson(e.latlng))
 
-function choose(xs) {
-  return xs[Math.floor(Math.random()*xs.length)]
+function switchAddPeopleOnClick(btn) {
+  addPeopleOnClick = !addPeopleOnClick
+  if (addPeopleOnClick) {
+    btn.className = "btn btn-dark"
+  } else {
+    btn.className = "btn btn-default"
+  }
 }
 
 function coords(building) {
-  var xs = [], ys = []
-  for (var nodeId of building.vertices) {
+  let xs = [], ys = []
+  for (let nodeId of building.vertices) {
     xs.push(nodes[nodeId].lat)
     ys.push(nodes[nodeId].lon)
   }
   return [xs, ys]
 }
 
-function mean(xs) {
-  return xs.reduce((a,b) => a+b, 0)/xs.length
-}
-
-// not used
+// these two functions are not used but might come handy later on
 function centreOfMass(building) {
   return coords(building).map((xs) => mean(xs))
 }
 
 // circumscribed square
 function csq(building) {
-  var [xs, ys] = coords(building)
+  let [xs, ys] = coords(building)
   return [[Math.min(...xs), Math.min(...ys)],
           [Math.max(...xs), Math.max(...ys)]]
 }
@@ -256,16 +281,7 @@ function csq(building) {
 // * how do we make sure people doesn't get added inside a building?
 //   (eg inside the building next to the one they've been added to)
 function addManyPeople() {
-  var n = S("num-people").value,
-      cs = []
-  for (var i = 0; i < n; i++) {
-    var b = choose(buildings),
-        [[x1, y1], [x2, y2]] = csq(b),
-        xdiff = x2-x1,
-        ydiff = y2-y1,
-        x3 = Math.random()*xdiff+x1,
-        y3 = Math.random()*ydiff+y1
-    addPerson([x3, y3])
-  }
+  let n = parseInt(S("num-people").value)
+  repeat (n) (() => addPerson(choose(buildings).exitDoor))
 }
 
