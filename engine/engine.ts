@@ -247,7 +247,7 @@ const movePerson = (i: number, numAttempt: number = 0) => {
           } else {
             log('more than 4 collisions found. ' +
               `try moving person ${i} in a different direcion`)
-            movePerson(i, numAttempt + 1)
+            return movePerson(i, numAttempt + 1)
           }
         }
         len /= 2
