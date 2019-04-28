@@ -1,0 +1,26 @@
+{
+  "name": "tsu-engine",
+  "version": "1.0.0",
+  "description": "Tsunami evacuation simulations (backend engine)",
+  "main": "engine.js",
+  "scripts": {
+    "start": "node engine.js"
+  },
+  "keywords": [
+    "typescript", "tsunami", "backend", "simulation"
+  ],
+  "author": "Ricardo",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/cors": "^2.8.4",
+    "@types/express": "^4.16.0",
+    "@types/node": "^10.12.18",
+    "@types/proj4": "^2.5.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "osm-read": "^0.6.0",
+    "proj4": "^2.5.0"
+  }
+}

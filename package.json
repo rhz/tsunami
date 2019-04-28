@@ -1,0 +1,17 @@
+{
+  "name": "tsunami",
+  "version": "1.0.0",
+  "description": "Tsunami evacuation simulations",
+  "main": "tsu.js",
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "keywords": [
+    "typescript"
+  ],
+  "author": "Ricardo",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/leaflet": "^1.4.3"
+  }
+}

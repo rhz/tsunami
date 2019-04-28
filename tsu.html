@@ -9,7 +9,7 @@
         integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
         crossorigin="anonymous">
   <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css"
+        href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
         integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
         crossorigin=""/>
   <link rel="stylesheet" href="tsu.css"/>
@@ -27,7 +27,7 @@
     <div class="row" style="margin-top: 20px; margin-bottom: 20px">
       <div class="col-md-1 offset-md-2" style="text-align: center">
         <button class="btn btn-success" id="play-and-stop"
-                title="Play" disabled
+                title="Play"
                 onclick="playAndStop(this)">
           <i class="fas fa-play"></i>
         </button>
@@ -48,7 +48,7 @@
         <label for="num-people">people</label>
       </div>
       <div class="col-md-2" style="text-align: center">
-        <button class="btn btn-default" id="switch-add" disabled
+        <button class="btn btn-default" id="switch-add"
                 title="Add people by clicking on the map"
                 onclick="switchAddPeopleOnClick(this)">
           <i class="fas fa-mouse-pointer"></i>
@@ -63,8 +63,8 @@
   </div>
   <div id="map"></div>
   <pre id="log" hidden></pre>
-  <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"
-          integrity="sha512-nMMmRyTVoLYqjP9hrbed9S+FzjZHW5gY1TWCHA5ckwXZBadntCNs8kEqAWdrb9O7rxbCaA4lKTIWjDXZxflOcA=="
+  <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+          integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
           crossorigin=""></script>
   <script src="osm-read-pbf.js"></script>
   <script src="tsu.js"></script>
